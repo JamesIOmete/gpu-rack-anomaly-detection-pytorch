@@ -270,7 +270,9 @@ counts, thresholds derived from training metrics, and per-window scores.
 
 Inference emits a compact anomaly report intended for operational triage. Pattern
 classification uses deterministic, explainable heuristics over derived telemetry
-features and reconstruction error.
+features and reconstruction error. See
+[Example Anomaly Report](docs/example_anomaly_report.md) for a human-readable
+rendering of simulated report output.
 
 ## Tests
 
