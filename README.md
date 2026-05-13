@@ -118,6 +118,22 @@ Core modules:
 - Structured JSON outputs suitable for downstream automation or incident review
 - Explainable heuristics layered on model reconstruction error
 
+## Role of PyTorch
+
+PyTorch is used for the trainable anomaly detection layer: defining the
+autoencoder, training it on normal telemetry windows, running inference, and
+measuring reconstruction error.
+
+The rest of the project is intentionally framework-independent systems
+engineering: telemetry simulation, typed schemas, feature preparation, windowing,
+thresholding, severity mapping, explainable heuristics, CLI workflows, tests, and
+structured JSON reports.
+
+That separation is deliberate. In a production environment, the model
+architecture could evolve, but the surrounding operational workflow would still
+matter: trusted inputs, repeatable preprocessing, measurable outputs, and a clean
+handoff path to dashboards, runbooks, tickets, or agent-assisted operations.
+
 ## Solution Architecture Lens
 
 This project is not intended to be a novel datacenter cooling model or a
