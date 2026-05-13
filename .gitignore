@@ -7,6 +7,7 @@ __pycache__/
 data/*.csv
 artifacts/*.pt
 artifacts/*.pth
+CURRENT_INSTRUCTIONS.md
 
 # Generated local data
 data/

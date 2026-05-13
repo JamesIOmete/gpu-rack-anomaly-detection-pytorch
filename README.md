@@ -1,36 +1,41 @@
 # GPU Rack Anomaly Detection in PyTorch
 
-Compact public portfolio project for anomaly detection on **simulated**
+Public-safe portfolio project demonstrating anomaly detection for simulated
 high-density GPU rack telemetry.
 
-This project demonstrates an end-to-end machine learning engineering workflow:
-synthetic telemetry generation, typed schemas, feature preparation, PyTorch
-autoencoder training, reconstruction-error evaluation, and structured
-operations-style inference reports.
+High-density AI compute environments depend on tightly controlled thermal,
+airflow, power, and environmental conditions. This project shows how a small
+PyTorch anomaly detection pipeline can turn simulated rack telemetry and
+thermal-derived features into structured operations reports suitable for
+monitoring, triage, or agentic infrastructure workflows.
 
-All telemetry in this repository is simulated. The project is intentionally
-public-safe: it does not model proprietary datacenter designs, real facility
-layouts, vendor-specific control loops, or raw thermal camera imagery.
+All telemetry in this repository is simulated. The project does not model
+proprietary datacenter designs, real facility layouts, vendor-specific control
+loops, or raw thermal camera imagery.
 
 ## Architecture
 
-```text
-Synthetic telemetry simulator
-        |
-        v
-Typed telemetry schemas
-        |
-        v
-Feature selection, normalization, and sliding windows
-        |
-        v
-PyTorch autoencoder trained on normal operating windows
-        |
-        v
-Evaluation metrics and reconstruction-error thresholds
-        |
-        v
-Structured anomaly report JSON for operational handoff
+This project is organized as a small operational ML pipeline. The model is only
+one part of the system; the surrounding steps make the workflow repeatable,
+testable, explainable, and suitable for downstream operations handoff.
+
+```mermaid
+flowchart TD
+    A[Simulated GPU Rack Telemetry] --> B[Typed Telemetry Schemas]
+    B --> C[Feature Selection]
+    C --> D[Normalization and Sliding Windows]
+    D --> E[PyTorch Autoencoder Training]
+    E --> F[Reconstruction Error Evaluation]
+    F --> G[Thresholds and Severity Bands]
+    G --> H[Structured Anomaly Report JSON]
+    H --> I[Operations Handoff: Dashboard, Ticket, Runbook, or Agent]
+
+    A1[Normal Operation] --> A
+    A2[Cooling Degradation] --> A
+    A3[Airflow Obstruction] --> A
+    A4[Localized Hotspot] --> A
+    A5[Coolant Loop Instability] --> A
+    A6[Sensor Drift] --> A
 ```
 
 Core modules:
@@ -43,6 +48,67 @@ Core modules:
 - `evaluate.py`: reconstruction-error evaluation CLI
 - `infer.py`: deterministic anomaly report CLI
 
+## Workflow Phases and Practical Value
+
+1. Simulate telemetry
+
+   The simulator creates repeatable GPU rack telemetry windows for normal
+   operation and several generic environmental anomaly scenarios.
+
+   Practical value: this makes the project testable without real facility data,
+   vendor-specific rack details, or proprietary control logic. It also allows
+   the same scenarios to be replayed during development, testing, and
+   demonstrations.
+
+2. Validate telemetry with typed schemas
+
+   Telemetry samples and anomaly reports are represented with explicit
+   contracts.
+
+   Practical value: typed schemas make the boundary between data generation,
+   model preparation, and operations output clear. In production systems, this
+   kind of contract reduces ambiguity between sensors, ML pipelines, dashboards,
+   and automation layers.
+
+3. Prepare model-ready features
+
+   Raw simulated telemetry is converted into stable feature columns, normalized,
+   and grouped into sliding time windows.
+
+   Practical value: anomaly detection depends on patterns over time, not just
+   single readings. Windowing allows the model to learn relationships such as
+   temperature drift, airflow instability, coolant behavior, and persistent
+   thermal hotspots.
+
+4. Train on normal operating behavior
+
+   The PyTorch autoencoder is trained on normal rack behavior and learns to
+   reconstruct expected telemetry patterns.
+
+   Practical value: real infrastructure incidents are rare, unevenly labeled,
+   and expensive to collect. Training on normal behavior is a practical approach
+   for early anomaly detection when complete labeled failure datasets do not
+   exist.
+
+5. Evaluate reconstruction error
+
+   Evaluation compares model reconstruction error against thresholds and
+   produces structured metrics.
+
+   Practical value: this separates model scoring from operational
+   interpretation. Instead of treating the model as magic, the pipeline exposes
+   measurable error, thresholds, severity bands, and per-window scores that can
+   be reviewed and tuned.
+
+6. Produce an operations-style anomaly report
+
+   Inference emits a compact JSON report with anomaly score, severity, likely
+   pattern, contributing signals, and a recommended action.
+
+   Practical value: operations teams do not need raw tensors; they need clear
+   signals that can drive triage. The final report is shaped for handoff to a
+   dashboard, ticketing system, runbook workflow, or agentic operations layer.
+
 ## What This Demonstrates
 
 - Practical PyTorch fluency without notebook-only implementation
@@ -51,6 +117,24 @@ Core modules:
 - Deterministic preprocessing, training controls, and smoke-testable workflows
 - Structured JSON outputs suitable for downstream automation or incident review
 - Explainable heuristics layered on model reconstruction error
+
+## Solution Architecture Lens
+
+This project is not intended to be a novel datacenter cooling model or a
+production-ready monitoring product. It is a compact demonstration of how I
+approach AI-enabled infrastructure systems from first principles:
+
+- Define the system boundary clearly
+- Keep data contracts explicit
+- Separate simulation, feature preparation, training, evaluation, and inference
+- Produce structured outputs instead of informal console-only results
+- Avoid hidden side effects or closed-loop control
+- Preserve a clean path from model output to human or agent-assisted operations
+
+That architecture matters because AI infrastructure monitoring is not just a
+modeling problem. It is an operational trust problem: the system must explain
+what it saw, why it matters, and how another workflow should safely consume the
+result.
 
 ## What This Intentionally Does Not Include
 
@@ -106,13 +190,13 @@ Install CPU-only PyTorch explicitly to avoid accidental CUDA wheel downloads:
 
 ```bash
 python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -e ".[ml]"
+python -m pip install numpy
 ```
 
-If you already have a suitable PyTorch install, `python -m pip install -e
-".[dev,ml]"` is also supported. On Linux, the default PyPI PyTorch package may
-download large CUDA-enabled wheels, so the CPU-only command above is recommended
-for laptops and WSL environments.
+The `ml` extra documents the ML dependency set, but on Linux, WSL, or CPU-only
+systems, the explicit CPU PyTorch install above is recommended to avoid large
+CUDA-enabled wheel downloads. If you already have a suitable PyTorch install,
+`python -m pip install -e ".[dev,ml]"` is also supported.
 
 ## End-To-End Example
 
@@ -200,7 +284,8 @@ tests, artifact creation, evaluation metrics, and inference reports.
 
 ## Future Work
 
-- Raw thermal image processing with explicit privacy and safety boundaries
+- Additional derived thermal feature modeling with explicit privacy and safety
+  boundaries
 - Integration with real sensor streams or historical telemetry exports
 - Dashboarding for anomaly trends, feature attribution, and rack-level drilldown
 - Agentic operations handoff that converts reports into ticket drafts or runbook
