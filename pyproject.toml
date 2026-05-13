@@ -26,6 +26,8 @@ ml = [
 [project.scripts]
 gpu-rack-simulate = "gpu_rack_anomaly.simulate_telemetry:main"
 gpu-rack-train = "gpu_rack_anomaly.train:main"
+gpu-rack-evaluate = "gpu_rack_anomaly.evaluate:main"
+gpu-rack-infer = "gpu_rack_anomaly.infer:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

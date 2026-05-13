@@ -3,9 +3,9 @@
 Compact public portfolio project for anomaly detection on simulated
 high-density GPU rack telemetry.
 
-The current implementation covers the data foundation, feature preparation, and
-a compact PyTorch autoencoder training path. Evaluation and inference CLIs are
-intentionally deferred.
+The current implementation covers the data foundation, feature preparation, a
+compact PyTorch autoencoder training path, evaluation, and operational-style
+inference reports.
 
 ## Scope
 
@@ -41,7 +41,7 @@ Supported scenarios:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,ml]"
 ```
 
 ## Generate Telemetry
@@ -111,7 +111,37 @@ The command writes:
 - `artifacts/metrics.json`
 
 Metrics are also printed as JSON. The model trains only on normal synthetic
-telemetry; anomaly scoring and operational reports are planned for later phases.
+telemetry.
+
+## Evaluate Model
+
+Evaluate a trained artifact against telemetry JSON:
+
+```bash
+gpu-rack-evaluate \
+  --model artifacts/autoencoder.pt \
+  --input examples/localized_hotspot_window.json \
+  --output artifacts/evaluation.json
+```
+
+Evaluation emits structured JSON with reconstruction error statistics, severity
+counts, thresholds derived from training metrics, and per-window scores.
+
+## Run Inference
+
+Generate an operational-style anomaly report:
+
+```bash
+gpu-rack-infer \
+  --model artifacts/autoencoder.pt \
+  --input examples/localized_hotspot_window.json \
+  --output artifacts/anomaly_report.json
+```
+
+Inference reports include `rack_id`, `anomaly_score`, `severity`,
+`likely_pattern`, `contributing_signals`, and `recommended_action`. Pattern
+classification uses deterministic, explainable heuristics over derived telemetry
+features and reconstruction error.
 
 ## Tests
 
@@ -122,7 +152,7 @@ pytest
 The tests validate schema constraints, deterministic simulation, anomaly
 scenario coverage, command-line JSON generation, feature extraction,
 normalization, sliding window generation, model forward pass, training smoke
-test, and artifact creation.
+test, artifact creation, evaluation metrics, and inference reports.
 
 ## Planned Later Phases
 
@@ -135,4 +165,4 @@ The operational inference output will eventually emit structured JSON with:
 - `contributing_signals`
 - `recommended_action`
 
-Future phases will add evaluation and inference CLIs around this schema.
+Future phases may add richer calibration and batch workflows around this schema.
