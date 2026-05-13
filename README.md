@@ -1,32 +1,82 @@
 # GPU Rack Anomaly Detection in PyTorch
 
-Compact public portfolio project for anomaly detection on simulated
+Compact public portfolio project for anomaly detection on **simulated**
 high-density GPU rack telemetry.
 
-The current implementation covers the data foundation, feature preparation, a
-compact PyTorch autoencoder training path, evaluation, and operational-style
-inference reports.
+This project demonstrates an end-to-end machine learning engineering workflow:
+synthetic telemetry generation, typed schemas, feature preparation, PyTorch
+autoencoder training, reconstruction-error evaluation, and structured
+operations-style inference reports.
 
-## Scope
+All telemetry in this repository is simulated. The project is intentionally
+public-safe: it does not model proprietary datacenter designs, real facility
+layouts, vendor-specific control loops, or raw thermal camera imagery.
 
-This repository uses public-safe synthetic data. It does not model proprietary
-datacenter design details and does not process raw thermal camera images. Thermal
-camera input is represented as derived features:
+## Architecture
 
-- `thermal_hotspot_score`
-- `thermal_gradient_score`
-- `hotspot_persistence_seconds`
+```text
+Synthetic telemetry simulator
+        |
+        v
+Typed telemetry schemas
+        |
+        v
+Feature selection, normalization, and sliding windows
+        |
+        v
+PyTorch autoencoder trained on normal operating windows
+        |
+        v
+Evaluation metrics and reconstruction-error thresholds
+        |
+        v
+Structured anomaly report JSON for operational handoff
+```
 
-## Telemetry Signals
+Core modules:
+
+- `schemas.py`: public-safe telemetry and report contracts
+- `simulate_telemetry.py`: deterministic synthetic rack telemetry generation
+- `features.py`: feature selection, standard scaling, windowing, and splits
+- `model.py`: compact PyTorch window autoencoder and artifact utilities
+- `train.py`: CPU-friendly training CLI
+- `evaluate.py`: reconstruction-error evaluation CLI
+- `infer.py`: deterministic anomaly report CLI
+
+## What This Demonstrates
+
+- Practical PyTorch fluency without notebook-only implementation
+- Production-minded project structure with CLI entry points and tests
+- Public-safe simulation of operational telemetry patterns
+- Deterministic preprocessing, training controls, and smoke-testable workflows
+- Structured JSON outputs suitable for downstream automation or incident review
+- Explainable heuristics layered on model reconstruction error
+
+## What This Intentionally Does Not Include
+
+- No raw thermal image processing
+- No real datacenter telemetry, facility layout, or proprietary rack design data
+- No vendor-specific cooling, power, or controls assumptions
+- No web app, dashboard, or notebook workflow
+- No claims that the simulated thresholds are production-ready
+- No automated remediation or closed-loop control actions
+
+## Telemetry Scope
 
 Each simulated sample includes:
 
 - GPU, inlet, outlet, coolant supply, and coolant return temperatures
 - Airflow, humidity, rack power, and vibration
-- Derived thermal-camera features
+- Derived thermal-camera-style features
 - A scenario label for simulation and testing
 
-Supported scenarios:
+Thermal camera data is represented only as derived features:
+
+- `thermal_hotspot_score`
+- `thermal_gradient_score`
+- `hotspot_persistence_seconds`
+
+Supported simulated scenarios:
 
 - `normal`
 - `cooling_degradation`
@@ -38,40 +88,72 @@ Supported scenarios:
 
 ## Install
 
+Create a virtual environment:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev,ml]"
+python -m pip install --upgrade pip
 ```
 
-## Generate Telemetry
+Install the base package and test dependencies:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+Install CPU-only PyTorch explicitly to avoid accidental CUDA wheel downloads:
+
+```bash
+python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e ".[ml]"
+```
+
+If you already have a suitable PyTorch install, `python -m pip install -e
+".[dev,ml]"` is also supported. On Linux, the default PyPI PyTorch package may
+download large CUDA-enabled wheels, so the CPU-only command above is recommended
+for laptops and WSL environments.
+
+## End-To-End Example
+
+Generate telemetry, train on normal behavior, evaluate an anomalous window, and
+produce an operational report:
 
 ```bash
 gpu-rack-simulate \
-  --scenario airflow_obstruction \
+  --scenario localized_hotspot \
   --window-size 60 \
   --seed 7 \
-  --output examples/airflow_obstruction_window.json
+  --output examples/localized_hotspot_window.json
+
+gpu-rack-train \
+  --samples 240 \
+  --window-size 24 \
+  --stride 4 \
+  --epochs 8 \
+  --output-dir artifacts
+
+gpu-rack-evaluate \
+  --model artifacts/autoencoder.pt \
+  --input examples/localized_hotspot_window.json \
+  --output artifacts/evaluation.json
+
+gpu-rack-infer \
+  --model artifacts/autoencoder.pt \
+  --input examples/localized_hotspot_window.json \
+  --output artifacts/anomaly_report.json
 ```
 
-The simulator can also be called from Python:
+The inference report includes:
 
-```python
-from gpu_rack_anomaly.simulate_telemetry import simulate_window
+- `rack_id`
+- `anomaly_score`
+- `severity`
+- `likely_pattern`
+- `contributing_signals`
+- `recommended_action`
 
-window = simulate_window("localized_hotspot", window_size=60, seed=7)
-payload = window.to_dict()
-```
-
-## Examples
-
-The `examples/` directory contains stable JSON windows for:
-
-- `normal_window.json`
-- `airflow_obstruction_window.json`
-- `localized_hotspot_window.json`
-
-## Prepare Features
+## Feature Preparation
 
 ```python
 from gpu_rack_anomaly.features import (
@@ -92,54 +174,17 @@ windows = make_sliding_windows(normalized, window_size=30, stride=5)
 `windows.windows` is shaped as `[window, timestep, feature]` using plain Python
 lists. The training code converts this structure to tensors internally.
 
-## Train Autoencoder
+## Outputs
 
-Train a small CPU-friendly autoencoder on generated normal telemetry:
-
-```bash
-gpu-rack-train \
-  --samples 240 \
-  --window-size 24 \
-  --stride 4 \
-  --epochs 8 \
-  --output-dir artifacts
-```
-
-The command writes:
+Training writes:
 
 - `artifacts/autoencoder.pt`
 - `artifacts/metrics.json`
 
-Metrics are also printed as JSON. The model trains only on normal synthetic
-telemetry.
-
-## Evaluate Model
-
-Evaluate a trained artifact against telemetry JSON:
-
-```bash
-gpu-rack-evaluate \
-  --model artifacts/autoencoder.pt \
-  --input examples/localized_hotspot_window.json \
-  --output artifacts/evaluation.json
-```
-
 Evaluation emits structured JSON with reconstruction error statistics, severity
 counts, thresholds derived from training metrics, and per-window scores.
 
-## Run Inference
-
-Generate an operational-style anomaly report:
-
-```bash
-gpu-rack-infer \
-  --model artifacts/autoencoder.pt \
-  --input examples/localized_hotspot_window.json \
-  --output artifacts/anomaly_report.json
-```
-
-Inference reports include `rack_id`, `anomaly_score`, `severity`,
-`likely_pattern`, `contributing_signals`, and `recommended_action`. Pattern
+Inference emits a compact anomaly report intended for operational triage. Pattern
 classification uses deterministic, explainable heuristics over derived telemetry
 features and reconstruction error.
 
@@ -149,20 +194,16 @@ features and reconstruction error.
 pytest
 ```
 
-The tests validate schema constraints, deterministic simulation, anomaly
-scenario coverage, command-line JSON generation, feature extraction,
+The tests cover schema validation, deterministic simulation, feature extraction,
 normalization, sliding window generation, model forward pass, training smoke
-test, artifact creation, evaluation metrics, and inference reports.
+tests, artifact creation, evaluation metrics, and inference reports.
 
-## Planned Later Phases
+## Future Work
 
-The operational inference output will eventually emit structured JSON with:
-
-- `rack_id`
-- `anomaly_score`
-- `severity`
-- `likely_pattern`
-- `contributing_signals`
-- `recommended_action`
-
-Future phases may add richer calibration and batch workflows around this schema.
+- Raw thermal image processing with explicit privacy and safety boundaries
+- Integration with real sensor streams or historical telemetry exports
+- Dashboarding for anomaly trends, feature attribution, and rack-level drilldown
+- Agentic operations handoff that converts reports into ticket drafts or runbook
+  recommendations, without taking automated control actions
+- Better threshold calibration using larger normal and anomalous validation sets
+- Batch evaluation workflows for multiple racks and time ranges
