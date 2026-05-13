@@ -3,10 +3,9 @@
 Compact public portfolio project for anomaly detection on simulated
 high-density GPU rack telemetry.
 
-The current implementation covers the data foundation and feature preparation:
-schemas, a synthetic telemetry simulator, example JSON windows, normalization,
-sliding windows, and pytest coverage. PyTorch model training, evaluation, and
-inference CLIs are intentionally deferred.
+The current implementation covers the data foundation, feature preparation, and
+a compact PyTorch autoencoder training path. Evaluation and inference CLIs are
+intentionally deferred.
 
 ## Scope
 
@@ -91,7 +90,28 @@ windows = make_sliding_windows(normalized, window_size=30, stride=5)
 ```
 
 `windows.windows` is shaped as `[window, timestep, feature]` using plain Python
-lists. Future PyTorch code can convert this structure to tensors.
+lists. The training code converts this structure to tensors internally.
+
+## Train Autoencoder
+
+Train a small CPU-friendly autoencoder on generated normal telemetry:
+
+```bash
+gpu-rack-train \
+  --samples 240 \
+  --window-size 24 \
+  --stride 4 \
+  --epochs 8 \
+  --output-dir artifacts
+```
+
+The command writes:
+
+- `artifacts/autoencoder.pt`
+- `artifacts/metrics.json`
+
+Metrics are also printed as JSON. The model trains only on normal synthetic
+telemetry; anomaly scoring and operational reports are planned for later phases.
 
 ## Tests
 
@@ -101,7 +121,8 @@ pytest
 
 The tests validate schema constraints, deterministic simulation, anomaly
 scenario coverage, command-line JSON generation, feature extraction,
-normalization, and sliding window generation.
+normalization, sliding window generation, model forward pass, training smoke
+test, and artifact creation.
 
 ## Planned Later Phases
 
@@ -114,5 +135,4 @@ The operational inference output will eventually emit structured JSON with:
 - `contributing_signals`
 - `recommended_action`
 
-Future phases will add the PyTorch autoencoder, training workflow, evaluation,
-and inference CLI around this schema.
+Future phases will add evaluation and inference CLIs around this schema.

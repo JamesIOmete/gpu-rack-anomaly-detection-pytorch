@@ -17,8 +17,15 @@ dev = [
     "pytest>=8.0",
 ]
 
+ml = [
+    "numpy>=1.26",
+    "torch>=2.2",
+]
+
+
 [project.scripts]
 gpu-rack-simulate = "gpu_rack_anomaly.simulate_telemetry:main"
+gpu-rack-train = "gpu_rack_anomaly.train:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
