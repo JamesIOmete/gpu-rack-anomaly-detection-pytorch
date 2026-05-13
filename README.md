@@ -3,9 +3,10 @@
 Compact public portfolio project for anomaly detection on simulated
 high-density GPU rack telemetry.
 
-Phase 1 implements the data foundation only: schemas, a synthetic telemetry
-simulator, example JSON windows, and pytest coverage. PyTorch model training,
-evaluation, and inference CLIs are intentionally deferred.
+The current implementation covers the data foundation and feature preparation:
+schemas, a synthetic telemetry simulator, example JSON windows, normalization,
+sliding windows, and pytest coverage. PyTorch model training, evaluation, and
+inference CLIs are intentionally deferred.
 
 ## Scope
 
@@ -71,14 +72,36 @@ The `examples/` directory contains stable JSON windows for:
 - `airflow_obstruction_window.json`
 - `localized_hotspot_window.json`
 
+## Prepare Features
+
+```python
+from gpu_rack_anomaly.features import (
+    fit_standard_scaler,
+    make_sliding_windows,
+    normalize_features,
+    telemetry_window_to_feature_matrix,
+)
+from gpu_rack_anomaly.simulate_telemetry import simulate_window
+
+telemetry = simulate_window("normal", window_size=120, seed=7)
+features = telemetry_window_to_feature_matrix(telemetry)
+scaler = fit_standard_scaler(features)
+normalized = normalize_features(features, scaler)
+windows = make_sliding_windows(normalized, window_size=30, stride=5)
+```
+
+`windows.windows` is shaped as `[window, timestep, feature]` using plain Python
+lists. Future PyTorch code can convert this structure to tensors.
+
 ## Tests
 
 ```bash
 pytest
 ```
 
-The Phase 1 tests validate schema constraints, deterministic simulation, anomaly
-scenario coverage, and command-line JSON generation.
+The tests validate schema constraints, deterministic simulation, anomaly
+scenario coverage, command-line JSON generation, feature extraction,
+normalization, and sliding window generation.
 
 ## Planned Later Phases
 
