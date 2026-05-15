@@ -331,3 +331,4 @@ tests, artifact creation, evaluation metrics, and inference reports.
 - [`aws-iot-edge-reference`](https://github.com/JamesIOmete/aws-iot-edge-reference) — the IoT telemetry pipeline that produces the kind of structured sensor data this anomaly detection model consumes
 - [`multicloud-sa-toolkit`](https://github.com/JamesIOmete/multicloud-sa-toolkit) — the cloud infrastructure layer where GPU rack monitoring systems would be deployed and operated
 
+- [`k8s-ai-inference-deployment-demo`](https://github.com/JamesIOmete/k8s-ai-inference-deployment-demo) — Kubernetes deployment patterns for serving an inference API in the same telemetry domain; shows the deployment layer this pipeline's outputs would feed into
