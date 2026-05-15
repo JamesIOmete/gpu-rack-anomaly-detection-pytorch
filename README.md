@@ -21,21 +21,35 @@ testable, explainable, and suitable for downstream operations handoff.
 
 ```mermaid
 flowchart TD
-    A[Simulated GPU Rack Telemetry] --> B[Typed Telemetry Schemas]
-    B --> C[Feature Selection]
-    C --> D[Normalization and Sliding Windows]
-    D --> E[PyTorch Autoencoder Training]
-    E --> F[Reconstruction Error Evaluation]
-    F --> G[Thresholds and Severity Bands]
-    G --> H[Structured Anomaly Report JSON]
-    H --> I[Operations Handoff: Dashboard, Ticket, Runbook, or Agent]
-
     A1[Normal Operation] --> A
     A2[Cooling Degradation] --> A
     A3[Airflow Obstruction] --> A
     A4[Localized Hotspot] --> A
     A5[Coolant Loop Instability] --> A
     A6[Sensor Drift] --> A
+
+    A[Simulated GPU Rack Telemetry] --> B[Typed Telemetry Schemas]
+    B --> C[Feature Selection]
+    C --> D[Normalization + Sliding Windows]
+    D --> E[PyTorch Autoencoder Training]
+    E --> F[Reconstruction Error Evaluation]
+    F --> G[Thresholds + Severity Bands]
+    G --> H[Structured Anomaly Report]
+    H --> I[Ops Handoff: Dashboard · Ticket · Runbook · Agent]
+
+    classDef scenario fill:#2d5a27,stroke:#4a9a3f,color:#ffffff
+    classDef ingest fill:#1a3a5c,stroke:#2e6da4,color:#ffffff
+    classDef process fill:#1e3a5f,stroke:#3a7abf,color:#ffffff
+    classDef model fill:#7a4a00,stroke:#c47a00,color:#ffffff
+    classDef output fill:#4a1a6e,stroke:#8a3abf,color:#ffffff
+    classDef handoff fill:#5a1a3a,stroke:#a03060,color:#ffffff
+
+    class A1,A2,A3,A4,A5,A6 scenario
+    class A,B ingest
+    class C,D process
+    class E,F,G model
+    class H output
+    class I handoff
 ```
 
 Core modules:
@@ -310,3 +324,10 @@ tests, artifact creation, evaluation metrics, and inference reports.
   recommendations, without taking automated control actions
 - Better threshold calibration using larger normal and anomalous validation sets
 - Batch evaluation workflows for multiple racks and time ranges
+
+## Related Projects
+
+- [`iot-ops-agent`](https://github.com/JamesIOmete/iot-ops-agent) — autonomous AI agent for IoT fleet operations; the agentic operations handoff layer this project's anomaly reports are designed to feed into
+- [`aws-iot-edge-reference`](https://github.com/JamesIOmete/aws-iot-edge-reference) — the IoT telemetry pipeline that produces the kind of structured sensor data this anomaly detection model consumes
+- [`multicloud-sa-toolkit`](https://github.com/JamesIOmete/multicloud-sa-toolkit) — the cloud infrastructure layer where GPU rack monitoring systems would be deployed and operated
+
