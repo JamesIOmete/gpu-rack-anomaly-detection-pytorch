@@ -330,9 +330,5 @@ tests, artifact creation, evaluation metrics, and inference reports.
 - [`iot-ops-agent`](https://github.com/JamesIOmete/iot-ops-agent) — autonomous AI agent for IoT fleet operations; the agentic operations handoff layer this project's anomaly reports are designed to feed into
 - [`aws-iot-edge-reference`](https://github.com/JamesIOmete/aws-iot-edge-reference) — the IoT telemetry pipeline that produces the kind of structured sensor data this anomaly detection model consumes
 - [`multicloud-sa-toolkit`](https://github.com/JamesIOmete/multicloud-sa-toolkit) — the cloud infrastructure layer where GPU rack monitoring systems would be deployed and operated
-
 - [`k8s-inference-ops`](https://github.com/JamesIOmete/k8s-inference-ops) — Kubernetes deployment patterns for serving an inference API in the same telemetry domain; shows the deployment layer this pipeline's outputs would feed into
 
-## Related Project
-
-For a companion Kubernetes deployment-pattern demo around an AI-style inference API, see [k8s-inference-ops](https://github.com/JamesIOmete/k8s-inference-ops).
